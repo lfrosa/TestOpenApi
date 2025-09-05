@@ -6,4 +6,10 @@ Esta é uma documentação que inclui um padrão OpenAPI.
 
 Veja abaixo a especificação da API:
 
-<iframe>openapi.html</iframe>
+
+<div>
+  
+  openapi.html</iframe>
+  
+</div>
+
