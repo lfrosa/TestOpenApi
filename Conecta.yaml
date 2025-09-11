@@ -1,0 +1,405 @@
+openapi: '3.1.1'
+info:
+  title: API Cielo Conecta Cielo
+  version: '1.0'
+  description: |
+   Possibilitar a integração de parceiros de negócio/Subadquirentes com a Cielo para transações com cartões não-presentes (transações digitadas) e cartões presentes nas modalidades Chip e Tarja.
+
+   A autenticação é uma operação necessária para obtenção do token que será utilizado nas demais chamadas de APIs
+
+   Para testes em sandbox você pode gerar uma credencial a qualquer momento através do site abaixo.
+
+  
+   https://omnichannelcadastrosandbox.cieloecommerce.cielo.com.br/
+ 
+
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers: 
+  - url: https://authsandbox.cieloecommerce.cielo.com.br
+
+paths:
+  /oauth2/token:
+    post:
+      servers:
+      - url: https://authsandbox.cieloecommerce.cielo.com.br
+        description: Ambiente de Homologação (Sandbox)
+      - url: https://auth.cieloecommerce.cielo.com.br
+        description: Ambiente de Produção
+      operationId: oauth2token
+      security:
+        - OAuth2ClientCredentials: []
+        - basicAuth: []
+      summary: Autenticação
+      description: A autenticação é uma operação necessária para obtenção do token que será utilizado nas demais chamadas de APIs.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  enum: [client_credentials]
+                  example: client_credentials
+              required:
+                - grant_type
+
+      
+      responses:
+        '200':
+          description: Token gerado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+        '400':
+          description: Requisição inválida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Código do error
+                    example: invalid_request
+                  error_description:
+                    type: string
+                    description: Descrição do error
+                    example: A solicitação não possui um parâmetro obrigatório...                    
+   
+
+        '401':
+          description: Não autorizado
+
+  /initialization/{SubordinatedMerchantId}/{TerminalId}:
+    get:
+      servers:
+      - url: https://parametersdownloadsandbox.cieloecommerce.cielo.com.br
+        description: Ambiente de Homologação (Sandbox)
+      - url: https://parametersdownload.cieloecommerce.cielo.com.br
+        description: Ambiente de Produção
+
+      operationId: initialization     
+      security:
+        - bearerAuth: []
+      summary: Inicialização de terminal
+      description: Solicita as tabelas e parametros para operação do terminal
+      parameters:
+        - name: SubordinatedMerchantId
+          in: path
+          schema:
+            type: string
+          description: Identificador da loja
+          required: true
+        - name: TerminalId
+          in: path
+          schema:
+            type: string     
+          description: Identificador do terminal     
+          required: true
+      responses:
+        '200':
+          description: Inicialização realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitializationResponse'
+
+        '400':
+          $ref: '#/components/responses/ValidationError'
+     
+
+
+
+components:
+  securitySchemes:
+    OAuth2ClientCredentials:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://authsandbox.cieloecommerce.cielo.com.br/oauth2/token # Replace with your token endpoint
+          scopes:
+            PhysicalCieloMaster: Cadastrar de Lojas e Terminais
+            PhysicalCieloTransactional: Transacionar e consultar            
+    basicAuth:
+      type: http
+      scheme: basic
+
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT  # opcional, apenas informativo
+
+  responses:
+    ValidationError:
+      description: Requisição inválida - erro de validação
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+
+
+  schemas:
+    InitializationResponse:
+      type: object
+      properties:
+        MerchantId:
+          type: string
+          description: Identificador da loja
+          example: 
+        TerminalId:
+          type: string
+        Acquirer:
+          $ref: '#/components/schemas/Acquirer'
+        Merchant:
+          $ref: '#/components/schemas/Merchant'
+        Bins:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bin'
+        Products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        Emv:
+          type: array
+          items:
+            $ref: '#/components/schemas/Emv'
+        Parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Parameter'
+        Issuers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Issuer'
+        AidParameters:
+          type: string
+        PublicKeys:
+          type: string
+        InitializationVersion:
+          type: integer
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: object
+          description: Lista de erros
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            subMerchantId:
+              - "The value '000002' is not valid."
+        type:
+          type: string
+          format: uri
+          example: "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+        title:
+          type: string
+          example: "One or more validation errors occurred."
+        status:
+          type: integer
+          example: 400
+        traceId:
+          type: string
+          example: "00-185aafb446a12f64f2995d20016e611d-7912324a5064f6b2-01"
+
+
+
+    Acquirer:
+      type: object
+      properties:
+        EnableContaclessCardReader: { type: boolean }
+        LockAppFunctionsExceptInitialization: { type: boolean }
+        HasChipReader: { type: boolean }
+        HasMagneticTrackReader: { type: boolean }
+        HasKeyboard: { type: boolean }
+
+    Merchant:
+      type: object
+      properties:
+        MerchantId: { type: string}
+        NetworkName: { type: string }
+        MerchantName: { type: string }
+        MerchantAddress: { type: string }
+        NationalId: { type: string }
+
+    Bin:
+      type: object
+      properties:
+        InitialBin: { type: string }
+        FinalBin: { type: string }
+        ProductId: { type: integer }
+        Type: { type: integer }
+        AllowFallbackWhenChipReadingFails: { type: boolean }
+        AllowChargingMoedeiroFromCash: { type: boolean }
+        AllowPurchaseWithCompreESaque: { type: boolean }
+        AllowOfflineFunctionExceptForEMVCard: { type: boolean }
+        AllowTypingCardNumber: { type: boolean }
+        MaskCardNumberUsingLast4Digits: { type: boolean }
+        MaskCardNumberUsingFirst6AndLast4Digits: { type: boolean }
+        AllowPrintCardHolderBalance: { type: boolean }
+        AllowDisplayCardHolderBalance: { type: boolean }
+        AllowPrintingPartialCardNumberInReceipt: { type: boolean }
+        RestrictSaleWithDuplicateValueWhenPostdated: { type: boolean }
+        RestrictSaleWithDuplicateValue: { type: boolean }
+        RequiresPassword: { type: boolean }
+        InterpretsLastDigitOfSecurityCode: { type: boolean }
+        RequiresPasswordExceptForEMVCard: { type: boolean }
+        EnableAdditionalSecurityCodeOptions_Unreadable_NoCode: { type: boolean }
+        RequiresSecurityCodeWhenMagneticTrackIsRead: { type: boolean }
+        RequiresSecurityCodeWhenCardNumberIsTyped: { type: boolean }
+        RequiresTypingLast4Digits: { type: boolean }
+        AllowCaptureOfFirstInstallmentValue: { type: boolean }
+        AllowCaptureOfDownpaymentValue: { type: boolean }
+        AllowGuaranteeHandling: { type: boolean }
+        AllowPostdatingTheFirstInstallmentForSaleAndCDCQuery: { type: boolean }
+        AllowPostdating: { type: boolean }
+        AllowCDCSale: { type: boolean }
+        AllowFinancingByStore: { type: boolean }
+        AllowFinancingByCreditCardCompany: { type: boolean }
+        ValidateCardTrack1: { type: boolean }
+        DoNotValidateCardModule10: { type: boolean }
+        CheckExpiryDateWhenCardNumberIsTyped: { type: boolean }
+        CheckExpiryDateWhenMagneticTrackIsRead: { type: boolean }
+        IssuerId: { type: integer }
+
+    Product:
+      type: object
+      properties:
+        ProductId: { type: integer }
+        ProductName: { type: string }
+        ProductType: { type: integer }
+        BrandId: { type: string }
+        AllowTransactionWithContactlessCard: { type: boolean }
+        IsFinancialProduct: { type: boolean }
+        AllowOfflineAuthorizationForEMVCard: { type: boolean }
+        AllowReprintReceipt: { type: boolean }
+        AllowPrintReceipt: { type: boolean }
+        AllowOfflineAuthorizationForContactlessCard: { type: boolean }
+        AllowCancel: { type: boolean }
+        AllowUndo: { type: boolean }
+        AllowCaptureOfFirstInstallmentValue: { type: boolean }
+        AllowCaptureOfDownpaymentValue: { type: boolean }
+        AllowGuaranteeHandling: { type: boolean }
+        AllowPostdatingTheFirstInstallmentForSaleAndCDCQuery: { type: boolean }
+        AllowPostdating: { type: boolean }
+        AllowCDCSale: { type: boolean }
+        AllowFinancingByStore: { type: boolean }
+        AllowFinancingByCreditCardCompany: { type: boolean }
+        MaximumNumberOfInstallmentsWhenFinancingByCreditCardCompany: { type: integer }
+        MaximumNumberOfInstallmentsWhenFinancingByStore: { type: integer }
+        MaximumNumberOfinstallmentsForSaleAndCDCQuery: { type: integer }
+        MinimumNumberOfInstallmentsWhenFinancingByStore: { type: integer }
+        PostdatedSaleGuaranteeType: { type: string }
+        PostdatedDayCountLimit: { type: integer }
+        FirstInstallmentDayCountLimit: { type: integer }
+
+    Emv:
+      type: object
+      properties:
+        Aid: { type: string }
+        TagsFirst: { type: string }
+        TagsSecond: { type: string }
+        IdxRecord: { type: integer }
+        Type: { type: integer }
+        RCodeFirst: { type: string }
+        RCodeSecond: { type: string }
+        InvalidateFunctionIfCardIsOnBlacklist: { type: boolean }
+        RequireBINToBeInCardRangeTable: { type: boolean }
+        StoreTransactionsRejectedByTerminalAppAndSendToHost: { type: boolean }
+        AllowOnlineAuthorizationTransactionRequest: { type: boolean }
+        AllowExtendedCardHolderName: { type: boolean }
+        NatEmvConctactRiskFloorLimit: { type: integer }
+        NatEmvConctactRiskMinValue: { type: integer }
+        NatEmvConctactRiskMinPercent: { type: integer }
+        NatEmvConctactRiskMaxPercent: { type: integer }
+        IntEmvConctactRiskFloorLimit: { type: integer }
+        IntEmvConctactRiskMinValue: { type: integer }
+        IntEmvConctactRiskMinPercent: { type: integer }
+        IntEmvConctactRiskMaxPercent: { type: integer }
+        ProductIds:
+          type: array
+          items: { type: integer }
+
+    Parameter:
+      type: object
+      properties:
+        Currency: { type: string }
+        AllowFallbackWhenChipReadingFails: { type: boolean }
+        AllowChargingMoedeiroFromCash: { type: boolean }
+        AllowPurchaseWithCompreESaque: { type: boolean }
+        AllowOfflineFunctionExceptForEMVCard: { type: boolean }
+        AllowTypingCardNumber: { type: boolean }
+        MaskCardNumberUsingLast4Digits: { type: boolean }
+        MaskCardNumberUsingFirst6AndLast4Digits: { type: boolean }
+        AllowPrintCardHolderBalance: { type: boolean }
+        AllowDisplayCardHolderBalance: { type: boolean }
+        AllowPrintingPartialCardNumberInReceipt: { type: boolean }
+        RestrictSaleWithDuplicateValueWhenPostdated: { type: boolean }
+        RestrictSaleWithDuplicateValue: { type: boolean }
+        RequiresPassword: { type: boolean }
+        InterpretsLastDigitOfSecurityCode: { type: boolean }
+        RequiresPasswordExceptForEMVCard: { type: boolean }
+        EnableAdditionalSecurityCodeOptions_Unreadable_NoCode: { type: boolean }
+        RequiresSecurityCodeWhenMagneticTrackIsRead: { type: boolean }
+        RequiresSecurityCodeWhenCardNumberIsTyped: { type: boolean }
+        RequiresTypingLast4Digits: { type: boolean }
+        CapturesServiceFee: { type: boolean }
+        AllowCancellationWithValueGreaterThanTheValueOfTheSale: { type: boolean }
+        CaptureBoardingFee: { type: boolean }
+
+    Issuer:
+      type: object
+      properties:
+        IssuerId: { type: integer }
+        IssuerName: { type: string }
+        AllowFallbackWhenChipReadingFails: { type: boolean }
+        AllowChargingMoedeiroFromCash: { type: boolean }
+        AllowPurchaseWithCompreESaque: { type: boolean }
+        AllowOfflineFunctionExceptForEMVCard: { type: boolean }
+        AllowTypingCardNumber: { type: boolean }
+        MaskCardNumberUsingLast4Digits: { type: boolean }
+        MaskCardNumberUsingFirst6AndLast4Digits: { type: boolean }
+        AllowPrintCardHolderBalance: { type: boolean }
+        AllowDisplayCardHolderBalance: { type: boolean }
+        AllowPrintingPartialCardNumberInReceipt: { type: boolean }
+        RestrictSaleWithDuplicateValueWhenPostdated: { type: boolean }
+        RestrictSaleWithDuplicateValue: { type: boolean }
+        RequiresPassword: { type: boolean }
+        InterpretsLastDigitOfSecurityCode: { type: boolean }
+        RequiresPasswordExceptForEMVCard: { type: boolean }
+        EnableAdditionalSecurityCodeOptions_Unreadable_NoCode: { type: boolean }
+        RequiresSecurityCodeWhenMagneticTrackIsRead: { type: boolean }
+        RequiresSecurityCodeWhenCardNumberIsTyped: { type: boolean }
+        RequiresTypingLast4Digits: { type: boolean }
+        AllowCaptureOfFirstInstallmentValue: { type: boolean }
+        AllowCaptureOfDownpaymentValue: { type: boolean }
+        AllowGuaranteeHandling: { type: boolean }
+        AllowPostdatingTheFirstInstallmentForSaleAndCDCQuery: { type: boolean }
+        AllowPostdating: { type: boolean }
+        AllowCDCSale: { type: boolean }
+        AllowFinancingByStore: { type: boolean }
+        AllowFinancingByCreditCardCompany: { type: boolean }
+        RequiresChipReader: { type: boolean }
+        RequiresPinpad: { type: boolean }
+        LimitDayforReversal: { type: integer }
+        LimitValueforReversal: { type: string }
+        LimitPercentforReversal: { type: integer }
+        IssuerNameForDisplay: { type: string }
+        IssuerNameForPrint: { type: string }
