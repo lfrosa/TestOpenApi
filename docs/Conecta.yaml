@@ -59,10 +59,16 @@ paths:
                 properties:
                   access_token:
                     type: string
+                    description: JWT que deverá ser utilizado nas demais solicitações
+                    example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6ImJWS0RGb1dIRTVha0szeXNqSjJScGpxZFZlRSJ9.eyJjbGllbnRfbmFtZSI6IlNhbmRib3ggT21uaWNoYW5uZWwgLSBMdWl6IEZlcm5hbmRvIFJpYmVpcm8gUm9zYSIsImNsaWVudF9pZCI6IjlkMWEyMjNlLTVkNDQtNGJmNC04NmY3LTcxMDE4YzE3NGY3NiIsInNjb3BlcyI6WyJ7XCJTY29wZVwiOlwiQ2llbG9BcGlcIixcIkNsYWltc1wiOltdfSIsIntcIlNjb3BlXCI6XCJQaHlzaWNhbENpZWxvVHJhbnNhY3Rpb25hbFwiLFwiQ2xhaW1zXCI6W119Il0sInJvbGUiOlsiQ2llbG9BcGkiLCJQaHlzaWNhbENpZWxvVHJhbnNhY3Rpb25hbCJdLCJpc3MiOiJodHRwczovL2F1dGhzYW5kYm94LmJyYXNwYWcuY29tLmJyIiwiYXVkIjoiVVZReGNVQTJjU0oxZmtRM0lVRW5PaUkzZG05dGZtbDVlbEI1SlVVdVFXZz0iLCJleHAiOjE3NTc2ODI1OTksIm5iZiI6MTc1NzU5NjE5OX0.VMDkeP9taNhdgktb3070XflXdOpF-njyoB_z8xoX0F57KE8_H8TGEfpJDdLsGewbci2nKAgzJAxWbDXQVM4nOiJ0496d2e2drrZtwJXUcoSrJ3w0OS_xGc75vgPYeJLYLRTgWa2R_keQuDZRIi3mutAKqEztQk2TtWlk9yK5HuIKaaB7ATJgjD9XPTBFBU3L24zVgszyTK8tzISaEBc5l7OGEB0nMTURNuDLiDE03dexST1r0MLkf5qYo0_U9ooVo5Zouv8i_tDkltF2yNy5gmy9fl26ylVT1aZA300HiMox3zfBUuwrllrIrvHxN2UFqJag9-eJj2wYs3KBtYIb6w"
                   token_type:
                     type: string
+                    example: bearer
+                    description: Tipo do token
                   expires_in:
                     type: integer
+                    description: Quantidade de segundos de duração do token
+                    example: 86399
         '400':
           description: Requisição inválida
           content:
@@ -158,9 +164,10 @@ components:
         MerchantId:
           type: string
           description: Identificador da loja
-          example: 
+          example: 0000000000000000 
         TerminalId:
           type: string
+          example: 0000000-0
         Acquirer:
           $ref: '#/components/schemas/Acquirer'
         Merchant:
