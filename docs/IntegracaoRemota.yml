@@ -1,0 +1,124 @@
+openapi: '3.1.1'
+info:
+  title: API Title
+  version: '1.0'
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT  
+servers:
+  - url: https://api.cielo.com.br
+    description: Produção
+  - url: https://api.cielo.com.br/sandbox-lio
+    description: SandBox
+paths:
+  /order-management/v1/orders:
+    post:
+      summary: Criar Pedido
+      operationId: orderCreate
+      description: Este endpoint realiza a tarefa
+      parameters:
+      - name: Client-Id
+        in: header
+        required: true
+        description: >
+          Identificação de acesso gerada no painel do desenvolvedor. 
+          Pode ser visualizada na coluna “Client ID” no menu “Desenvolvedor” → “Client ID Cadastrados”.
+        schema:
+          type: string
+          example: "abc123-client-id"
+
+      - name: Access-Token
+        in: header
+        required: true
+        description: >
+          Token de acesso que define as permissões do Client ID. 
+          Pode ser visualizado clicando em “detalhes” na coluna “Access Tokens” no menu “Desenvolvedor”.
+        schema:
+          type: string
+          example: "xyz456-access-token"
+
+      - name: Merchant-Id
+        in: header
+        required: true
+        description: Token que identifica o estabelecimento comercial no servidor Order Manager da Cielo LIO. 
+        schema:
+          type: string
+          example: "xyz456-access-token"
+      requestBody:
+        description: Order payload
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                number:
+                  type: string
+                  example: "0992f1d5cee540d9a9648f4d6a9e4aa6"
+                reference:
+                  type: string
+                  example: "PEDIDO #1234"
+                status:
+                  type: string
+                  enum: [DRAFT, CONFIRMED, CANCELLED]
+                  example: "DRAFT"
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      sku:
+                        type: string
+                        example: "ede8f84a8b8645cb8e576a593c25c6ed"
+                      name:
+                        type: string
+                        example: "produto 1"
+                      unit_price:
+                        type: number
+                        format: float
+                        example: 500
+                      quantity:
+                        type: integer
+                        example: 2
+                      unit_of_measure:
+                        type: string
+                        example: "EACH"
+                    required:
+                      - sku
+                      - name
+                      - unit_price
+                      - unit_of_measure
+                notes:
+                  type: string
+                  example: "Mesa 1"
+                price:
+                  type: number
+                  format: float
+                  example: 9155
+              required:
+                - number
+                - reference
+                - status
+                - items
+                - price
+
+        
+      responses:
+
+        '200':
+          description: Requisição bem-sucedida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    example: "2e1d7b07-dcee-4a09-8d09-3bb02d94169d"
+
+        '400':
+          description: Bad request
+
+          
+
