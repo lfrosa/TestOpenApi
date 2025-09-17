@@ -115,6 +115,7 @@ paths:
                   id:
                     type: string
                     format: uuid
+                    description: UUID do pedido, e deverá ser utilizado em todas as consultas.
                     example: "2e1d7b07-dcee-4a09-8d09-3bb02d94169d"
 
         '400':
